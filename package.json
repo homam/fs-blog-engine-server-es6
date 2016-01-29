@@ -1,0 +1,27 @@
+{
+  "name": "blog-engine-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "configure": "node initialize.js",
+    "start": "nodemon index.js --exec babel-node --presets es2015,stage-2",
+    "build": "babel -d dist",
+    "serve": "node dist/index.js",
+    "test": "mocha --compilers js:babel-register"
+  },
+  "author": "Homam",
+  "devDependencies": {
+    "babel-cli": "^6.3.15",
+    "babel-preset-es2015": "^6.3.13",
+    "babel-preset-stage-2": "^6.3.13",
+    "babel-register": "^6.3.13",
+    "mocha": "^2.4.5",
+    "nodemon": "^1.8.1"
+  },
+  "dependencies": {
+    "async-ls": "0.0.3",
+    "body-parser": "^1.14.2",
+    "prelude-ls": "^1.1.2"
+  }
+}
