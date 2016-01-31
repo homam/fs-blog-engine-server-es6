@@ -4,6 +4,10 @@ import {promises} from 'async-ls'
 const {fromErrorValueCallback, bindP, returnP} = promises
 import engineCreator from '../blog-engine/fs-blog-engine'
 
+const wait = (ms) => new Promise(resolve => {
+    setTimeout(_ => resolve(), ms)
+})
+
 const fileName = './test/store.json'
 const newEngine = _ => engineCreator(fileName)
 
@@ -41,5 +45,46 @@ describe('fs-json-storage', _ => {
                 })
             )
     })
+
+    specify('updating a post', () => {
+        const store = newEngine()
+        return add(store).then(post => {
+            post.body = 'updated body'
+            return store.update(post).then(_ =>
+                store.get(post._id).then(updatedPost => {
+                    assert(!!updatedPost, `newly updated post was not found in the dataset: \n${JSON.stringify(post)}`)
+                })
+            )
+        })
+    })
+
+    specify('updating a post must maintain its index', () => {
+        const store = newEngine()
+        return add(store)
+        .then(_ => wait(20))
+            .then(_ => add(store))
+            .then(post2 => wait(20).then(_ => post2))
+            .then(post2 => add(store).then(_ => post2))
+            .then(post2 => {
+                post2.body = 'updated body'
+                return store.update(post2)
+            })
+            .then(_ => store.allPosts())
+            .then(posts => {
+                assert(posts[1].body == 'updated body', `posts order changed after an update, second item must have been updated\n${JSON.stringify(posts, null, 2)}`)
+            })
+    })
+
+    specify('deleting a post', () => {
+        const store = newEngine()
+        return add(store)
+            .then(post => store.remove(post._id).then(deletedPost => {
+                assert(deletedPost._id == post._id, 'deleted post _id is not correct')
+                return store.allPosts().then(posts => {
+                    assert(posts.length == 0, 'dataset must be empty')
+                })
+            }))
+    })
+
 
 })

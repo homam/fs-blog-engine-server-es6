@@ -2,47 +2,40 @@ import http from 'http'
 import bodyParser from 'body-parser'
 import {each} from 'prelude-ls'
 import express from 'express'
-import engineCreator from './blog-engine/fs-blog-engine'
-import servieCreator from './blog-engine/service'
-
-const engine = engineCreator('./store.json')
-const service = servieCreator(engine)
-
-
-const apiCall = (res, route, f) =>
-    f()
-    .then(it => res.send(it))
-    .catch(it => {
-        console.error(route, it);
-        return res.status(500).send({
-            error: true,
-            errorContext: it.toString()
-        })
-    })
-
-const makeRoute = (verb, path, f) =>
-    [
-        path, 
-        verb, 
-        path, 
-        (req, res) => apiCall(res, path, _ => f(req))
-    ]
-
+import IO from 'socket.io'
+import routes from './routes'
+const port = !!process.env.PORT ? process.env.PORT : 3001
 
 const app = express()
-    .use(bodyParser.json())
-    .use(bodyParser.urlencoded({extended: false}))
+.use(bodyParser.json())
+.use(bodyParser.urlencoded({extended: false}))
+.use((req, res, next) => {
+    // CORS
+    res.set('Access-Control-Allow-Origin', '*')
+    res.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+    if(!!req.headers['Access-Control-Request-Headers'.toLowerCase()]) {
+        res.set('Access-Control-Allow-Headers', req.headers['Access-Control-Request-Headers'.toLowerCase()])
+    }
+    if('OPTIONS' == req.method){
+        res.end('')
+    } else {
+        next()
+    }
+})
 
-const routes = [
-    makeRoute('get', '/api/all', service.all), 
-    makeRoute('get', '/api/get/:postid', function(req){
-        return service.get(parseInt(req.params.postid));
-    })
-]
-each(route => app[route[1]].apply(app, route.slice(2)), routes)
 
 const server = http.createServer(app)
-const port = 3001
+const io = IO(server)
+
+each(([_, verb, path, f]) => app[verb](path, f), routes({
+    onChange: posts => {
+        // this callback is called every time a post created / updated / deleted
+        // emit the change to all clients
+        io.emit('all-posts', posts)
+    }
+}))
+
+
 
 server.listen(port)
 console.log(`Server running at http://127.0.0.1:${port}/`);

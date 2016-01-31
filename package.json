@@ -1,11 +1,11 @@
 {
-  "name": "blog-engine-server",
+  "name": "blog-engine-server-es6",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "configure": "node initialize.js",
-    "start": "nodemon index.js --exec babel-node --presets es2015,stage-2",
+    "start": "nodemon index.js --ignore store.json --exec babel-node --presets es2015,stage-2",
     "build": "babel -d dist",
     "serve": "node dist/index.js",
     "test": "mocha --compilers js:babel-register"
@@ -22,6 +22,8 @@
   "dependencies": {
     "async-ls": "0.0.3",
     "body-parser": "^1.14.2",
-    "prelude-ls": "^1.1.2"
+    "merge": "^1.2.0",
+    "prelude-ls": "^1.1.2",
+    "socket.io": "^1.4.5"
   }
 }
